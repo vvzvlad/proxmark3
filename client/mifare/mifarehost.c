@@ -1046,7 +1046,7 @@ void detect_classic_magic(void) {
             PrintAndLogEx(SUCCESS, "Answers to magic commands (Write Once / FUID): " _GREEN_("YES"));
             break;
         default:
-            PrintAndLogEx(INFO, "Answers to magic commands: " _YELLOW_("NO"));
+            //PrintAndLogEx(INFO, "Answers to magic commands: " _YELLOW_("NO"));
             break;
     }
 }
