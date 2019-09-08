@@ -1,5 +1,5 @@
 # Default platform if no platform specified
-PLATFORM?=PM3RDV4
+PLATFORM?=PM3OTHER
 
 # Standalone Mode info (path depends if make is called at top or from armsrc)
 # Guard Makefile.hal against implicit rules: (with % to avoid being first goal)
