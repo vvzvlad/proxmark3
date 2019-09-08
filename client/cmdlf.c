@@ -191,6 +191,16 @@ static int usage_lf_find(void) {
     return PM3_SUCCESS;
 }
 
+static int usage_lf_find_cycle(void) {
+    PrintAndLogEx(NORMAL, "Usage:  lf cs [h] [i]");
+    PrintAndLogEx(NORMAL, "Searching for a suitable tag in an infinite loop. Stop searching when a button is pressed or a tag is found  ");
+    PrintAndLogEx(NORMAL, "Options:");
+    PrintAndLogEx(NORMAL, "       h               - This help");
+    PrintAndLogEx(NORMAL, "       i               - Will continue the search even after finding the tag");
+    PrintAndLogEx(NORMAL, "");
+    return PM3_SUCCESS;
+}
+
 
 /* send a LF command before reading */
 int CmdLFCommandRead(const char *Cmd) {
@@ -1129,6 +1139,158 @@ out:
     return PM3_SUCCESS;
 }
 
+
+int CmdLFfindCycle(const char *Cmd) {
+    size_t minLength = 2000;
+    char cmdp = tolower(param_getchar(Cmd, 0));
+    if (strlen(Cmd) > 3 || cmdp == 'h') return usage_lf_find_cycle();
+    bool isOnline = (session.pm3_present && (cmdp != '1'));
+
+    for (;;) {
+
+        if (kbd_enter_pressed()) { // abort by keyboard press
+            PrintAndLogEx(SUCCESS, "\nEnd search.");
+            break;
+        }
+
+        PrintAndLogEx(INPLACE, "Search...");
+
+
+        if (isOnline)
+            lf_read(true, 30000);
+
+        if (GraphTraceLen < minLength) {
+            PrintAndLogEx(FAILED, "Data in Graphbuffer was too small.");
+            return PM3_ESOFT;
+        }
+
+        if (isOnline) {
+            if (getSignalProperties()->isnoise) {
+                if (IfPm3Hitag()) {
+                    if (readHitagUid()) { PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("Hitag") "found!"); return PM3_SUCCESS;}
+                }
+                if (readCOTAGUid()) { PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("COTAG ID") "found!"); return PM3_SUCCESS;}
+            }
+        }
+
+
+        if (EM4x50Read("", false) == PM3_SUCCESS)  {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("EM4x50 ID") "found!");
+            if (cmdp != 'i') return PM3_SUCCESS;
+            }
+        if (demodEM410x() == PM3_SUCCESS)          {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("EM410x ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+            }
+
+        if (demodHID() == PM3_SUCCESS)             {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("HID Prox ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+        if (demodAWID() == PM3_SUCCESS)            {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("AWID ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+        if (demodParadox() == PM3_SUCCESS)         {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("Paradox ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+
+        if (demodFDX() == PM3_SUCCESS)             {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("FDX-B ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+        if (demodGuard() == PM3_SUCCESS)           {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("Guardall G-Prox II ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+        if (demodIdteck() == PM3_SUCCESS)          {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("Idteck ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+        if (demodIndala() == PM3_SUCCESS)          {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("Indala ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+        if (demodIOProx() == PM3_SUCCESS)          {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("IO Prox ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+        if (demodJablotron() == PM3_SUCCESS)       {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("Jablotron ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+        if (demodNedap() == PM3_SUCCESS)           {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("NEDAP ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+        if (demodNexWatch() == PM3_SUCCESS)        {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("NexWatch ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+        if (demodNoralsy() == PM3_SUCCESS)         {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("Noralsy ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+        if (demodKeri() == PM3_SUCCESS)            {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("KERI ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+        if (demodPac() == PM3_SUCCESS)             {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("PAC/Stanley ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+        if (demodPresco() == PM3_SUCCESS)          {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("Presco ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+        if (demodPyramid() == PM3_SUCCESS)         {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("Pyramid ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+        if (demodSecurakey() == PM3_SUCCESS)       {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("Securakey ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+        if (demodViking() == PM3_SUCCESS)          {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("Viking ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+        if (demodVisa2k() == PM3_SUCCESS)          {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("Visa2000 ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+        if (demodTI() == PM3_SUCCESS)              {
+            PrintAndLogEx(SUCCESS, "\nValid " _GREEN_("Texas Instrument ID") "found!");
+            if (CheckChipType(isOnline) == false) { PrintAndLogEx(DEBUG, "Automatic chip type detection " _RED_("failed"));}
+            if (cmdp != 'i') return PM3_SUCCESS;
+        }
+
+
+    }
+    return PM3_SUCCESS;
+}
+
 static command_t CommandTable[] = {
     {"help",        CmdHelp,            AlwaysAvailable, "This help"},
     {"awid",        CmdLFAWID,          AlwaysAvailable, "{ AWID RFIDs...              }"},
@@ -1160,6 +1322,7 @@ static command_t CommandTable[] = {
     {"flexdemod",   CmdFlexdemod,       AlwaysAvailable, "Demodulate samples for FlexPass"},
     {"read",        CmdLFRead,          IfPm3Lf,         "['s' silent] Read 125/134 kHz LF ID-only tag. Do 'lf read h' for help"},
     {"search",      CmdLFfind,          AlwaysAvailable, "[offline] ['u'] Read and Search for valid known tag (in offline mode it you can load first then search) \n\t\t-- 'u' to search for unknown tags"},
+    {"cs",          CmdLFfindCycle,     AlwaysAvailable, "Read and Search in Cycle for valid known tag "},
     {"sim",         CmdLFSim,           IfPm3Lf,         "[GAP] -- Simulate LF tag from buffer with optional GAP (in microseconds)"},
     {"simask",      CmdLFaskSim,        IfPm3Lf,         "[clock] [invert <1|0>] [biphase/manchester/raw <'b'|'m'|'r'>] [msg separator 's'] [d <hexdata>] \n\t\t-- Simulate LF ASK tag from demodbuffer or input"},
     {"simfsk",      CmdLFfskSim,        IfPm3Lf,         "[c <clock>] [i] [H <fcHigh>] [L <fcLow>] [d <hexdata>] \n\t\t-- Simulate LF FSK tag from demodbuffer or input"},

@@ -43,6 +43,16 @@ static int usage_hf_search() {
     return PM3_SUCCESS;
 }
 
+static int usage_hf_searchc() {
+    PrintAndLogEx(NORMAL, "Usage: hf cs");
+    PrintAndLogEx(NORMAL, "Searching for a suitable tag in an infinite loop. Stop searching when a button is pressed or a tag is found  ");
+    PrintAndLogEx(NORMAL, "Options:");
+    PrintAndLogEx(NORMAL, "       h               - This help");
+    PrintAndLogEx(NORMAL, "       i               - Will continue the search even after finding the tag");
+    PrintAndLogEx(NORMAL, "");
+    return PM3_SUCCESS;
+}
+
 static int usage_hf_sniff() {
     PrintAndLogEx(NORMAL, "The high frequence sniffer will assign all available memory on device for sniffed data");
     PrintAndLogEx(NORMAL, "Use " _YELLOW_("'data samples'")" command to download from device,  and " _YELLOW_("'data plot'")" to look at it");
@@ -67,6 +77,39 @@ static int usage_hf_tune() {
     PrintAndLogEx(NORMAL, "       <iter>               - number of iterations (default: infinite)");
     PrintAndLogEx(NORMAL, "");
     return PM3_SUCCESS;
+}
+
+int CmdHFCSearch(const char *Cmd) {
+
+    char cmdp = tolower(param_getchar(Cmd, 0));
+    if (cmdp == 'h') return usage_hf_searchc();
+
+    PrintAndLogEx(INFO, "Checking for known tags...\n");
+
+    for (;;) {
+
+        if (kbd_enter_pressed()) { // abort by keyboard press
+            break;
+        }
+
+        if (IfPm3Iso14443a()) {
+            PrintAndLogEx(INPLACE, "Search ISO14443-A...");
+            if (infoHF14A(false, false) > 0) {
+                if (cmdp != 'i') return PM3_SUCCESS;
+            }
+
+            if (cmdp == 'b') {
+                PrintAndLogEx(INPLACE, "Search ISO14443-B...");
+                if (readHF14B(false) == 1) {
+                    if (cmdp != 'i') return PM3_SUCCESS;
+                }
+            }
+        }
+
+    }
+
+    PrintAndLogEx(FAILED, "\nno known/supported 13.56 MHz tags found\n");
+    return PM3_ESOFT;
 }
 
 int CmdHFSearch(const char *Cmd) {
@@ -222,6 +265,7 @@ static command_t CommandTable[] = {
     {"list",        CmdTraceList,     AlwaysAvailable,    "List protocol data in trace buffer"},
     {"tune",        CmdHFTune,        IfPm3Present,    "Continuously measure HF antenna tuning"},
     {"search",      CmdHFSearch,      AlwaysAvailable, "Search for known HF tags"},
+    {"cs",          CmdHFCSearch,     AlwaysAvailable, "Search ISO14443A/b HF tags in cycle"},
     {"sniff",       CmdHFSniff,       IfPm3Hfsniff,    "<samples to skip (10000)> <triggers to skip (1)> Generic HF Sniff"},
     {NULL, NULL, NULL, NULL}
 };
