@@ -1506,7 +1506,7 @@ int infoHF14A(bool verbose, bool do_nack_test) {
         else if (res == 0)
             PrintAndLogEx(SUCCESS, "Prng detection: " _YELLOW_("HARD"));
         else
-            PrintAndLogEx(FAILED, "prng detection:  " _RED_("Fail"));
+            PrintAndLogEx(FAILED, "Prng detection:  " _RED_("Fail"));
 
         if (do_nack_test)
             detect_classic_nackbug(!verbose);
