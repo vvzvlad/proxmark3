@@ -77,4 +77,5 @@ client/lualibs/pm3_cmd.lua
 # recompiled
 fpga_version_info.c
 
+/client/reveng/bmptst
 .proxmark3/*
