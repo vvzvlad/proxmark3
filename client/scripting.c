@@ -956,6 +956,7 @@ static int l_T55xx_readblock(lua_State *L) {
         return returnToLuaWithError(L, "Failed to get actual data");
     }
 
+    PrintAndLogEx(NORMAL, "\n");
     lua_pushunsigned(L, blockData);
     return 1;
 }

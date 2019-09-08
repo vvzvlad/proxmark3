@@ -183,7 +183,7 @@ static int CmdHIDDemod(const char *Cmd) {
     }
 
     if (hi2 != 0) { //extra large HID tags
-        PrintAndLogEx(SUCCESS, "HID Prox TAG ID: %x%08x%08x (%u)", hi2, hi, lo, (lo >> 1) & 0xFFFF);
+        PrintAndLogEx(SUCCESS, "\nHID Prox TAG ID: %x%08x%08x (%u)", hi2, hi, lo, (lo >> 1) & 0xFFFF);
     } else {  //standard HID tags <38 bits
         uint8_t fmtLen = 0;
         uint32_t cc = 0;

@@ -1259,7 +1259,7 @@ int infoHF14A(bool verbose, bool do_nack_test) {
         return select_status;
     }
 
-    PrintAndLogEx(NORMAL, " UID : %s", sprint_hex(card.uid, card.uidlen));
+    PrintAndLogEx(NORMAL, "\n UID : %s", sprint_hex(card.uid, card.uidlen));
     PrintAndLogEx(NORMAL, "ATQA : %02x %02x", card.atqa[1], card.atqa[0]);
     PrintAndLogEx(NORMAL, " SAK : %02x [%" PRIu64 "]", card.sak, resp.oldarg[0]);
 
@@ -1494,7 +1494,7 @@ int infoHF14A(bool verbose, bool do_nack_test) {
             }
         }
     } else {
-        PrintAndLogEx(INFO, "proprietary non iso14443-4 card found, RATS not supported");
+        //PrintAndLogEx(INFO, "proprietary non iso14443-4 card found, RATS not supported");
     }
 
     detect_classic_magic();
