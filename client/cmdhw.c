@@ -690,11 +690,6 @@ void pm3_version(bool verbose, bool oneliner) {
         PrintAndLogEx(NORMAL, "\n [ CLIENT ]");
         PrintAndLogEx(NORMAL, "  client: RRG/Iceman"); // TODO version info?
         PrintAndLogEx(NORMAL, "  compiled with " PM3CLIENTCOMPILER __VERSION__ PM3HOSTOS PM3HOSTARCH);
-        PrintAndLogEx(NORMAL, "\n [ PROXMARK RDV4 ]");
-        PrintAndLogEx(NORMAL, "  external flash:                  %s", IfPm3Flash() ? _GREEN_("present") : _YELLOW_("absent"));
-        PrintAndLogEx(NORMAL, "  smartcard reader:                %s", IfPm3Smartcard() ? _GREEN_("present") : _YELLOW_("absent"));
-        PrintAndLogEx(NORMAL, "\n [ PROXMARK RDV4 Extras ]");
-        PrintAndLogEx(NORMAL, "  FPC USART for BT add-on support: %s", IfPm3FpcUsartHost() ? _GREEN_("present") : _YELLOW_("absent"));
 
         if (IfPm3FpcUsartDevFromUsb())
             PrintAndLogEx(NORMAL, "  FPC USART for developer support: %s", _GREEN_("present"));
