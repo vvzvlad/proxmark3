@@ -1,0 +1,16 @@
+{
+"folders": [
+	{
+		"path": "."
+	}
+],
+   "settings": {
+      "git.ignoreLimitWarning": true,
+      "workbench.colorCustomizations": {
+         "activityBar.background": "#5C462C",
+         "titleBar.activeBackground": "#422A0C",
+         "titleBar.activeForeground": "#FFFFFF",
+      },
+      "python.pythonPath": "/usr/local/opt/python/bin/python3.7"
+   }
+}
