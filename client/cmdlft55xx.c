@@ -107,6 +107,22 @@ static int usage_t55xx_write() {
     PrintAndLogEx(NORMAL, "");
     return PM3_SUCCESS;
 }
+
+static int usage_t55xx_write_id_em() {
+    PrintAndLogEx(NORMAL, "Usage:  lf t55xx idem [r <mode>] i <id> [p <password>] [t]");
+    PrintAndLogEx(NORMAL, "Options:");
+    PrintAndLogEx(NORMAL, "     i <id>    - ID to write. 5 bytes (10 hex characters)");
+    PrintAndLogEx(NORMAL, "     p <password> - OPTIONAL password 4 bytes (8 hex characters)");
+    PrintAndLogEx(NORMAL, "     t            - OPTIONAL test mode write - ****DANGER****");
+    print_usage_t55xx_downloadlink();
+    PrintAndLogEx(NORMAL, "");
+    PrintAndLogEx(NORMAL, "Examples:");
+    PrintAndLogEx(NORMAL, "      lf t55xx idem i 03002B88DA            - write em-ID 03002B88DA");
+    PrintAndLogEx(NORMAL, "      lf t55xx idem r 2 i 03002B88DA p feedbeef - write 03002B88DA, password feedbeef, downlink mode 2");
+    PrintAndLogEx(NORMAL, "");
+    return PM3_SUCCESS;
+}
+
 static int usage_t55xx_trace() {
     PrintAndLogEx(NORMAL, "Usage:  lf t55xx trace [r mode]");
     PrintAndLogEx(NORMAL, "Options:");
@@ -2662,6 +2678,135 @@ static int CmdT55xxSetDeviceConfig(const char *Cmd) {
     return PM3_SUCCESS;
 }
 
+
+
+static int CmdT55xxWriteIdEm(const char *Cmd) {
+    int i;
+    int id_length = 40;
+    uint64_t id = 0x1FF;
+    uint64_t user_id = 0xFFFFFFFFFFFFFFFF; // invalid id value
+    uint64_t rev_id = 0; // reversed ID
+    int c_parity[4];     // column parity
+    int r_parity = 0;    // row parity
+    uint32_t id_hi;
+    uint32_t id_lo;
+
+    uint32_t password      = 0;    //default to blank Block 7
+    bool     usepwd        = false;
+    bool     gotid       = false;
+    bool     testMode      = false;
+    bool     errors        = false;
+    uint8_t  cmdp          = 0;
+    uint32_t downlink_mode = 0;
+
+    while (param_getchar(Cmd, cmdp) != 0x00 && !errors) {
+        switch (tolower(param_getchar(Cmd, cmdp))) {
+            case 'h':
+                return usage_t55xx_write_id_em();
+            case 'i':
+                user_id = param_get64ex(Cmd, cmdp + 1, 0, 16);
+                if (user_id >= 0x10000000000) {
+                    PrintAndLogEx(ERR, "Error! Given EM410x ID is longer than 40 bits.\n");
+                    errors = true;
+                    break;
+                }
+                gotid = true;
+                cmdp += 2;
+                break;
+            case 'p':
+                password = param_get32ex(Cmd, cmdp + 1, 0, 16);
+                usepwd = true;
+                cmdp += 2;
+                break;
+            case 't':
+                testMode = true;
+                cmdp++;
+                break;
+            case 'r':
+                downlink_mode = param_getchar(Cmd, cmdp + 1) - '0';
+                if (downlink_mode > 3) downlink_mode = 0;
+                cmdp += 2;
+                break;
+            default:
+                PrintAndLogEx(WARNING, "Unknown parameter '%c'", param_getchar(Cmd, cmdp));
+                errors = true;
+                break;
+        }
+    }
+    if (errors || !gotid) return usage_t55xx_write_id_em();
+
+    PacketResponseNG resp;
+    uint8_t flags;
+    flags  = (usepwd)   ? 0x1 : 0;
+    flags |= (false)    ? 0x2 : 0;
+    flags |= (testMode) ? 0x4 : 0;
+    flags |= (downlink_mode << 3);
+    char pwdStr[16] = {0};
+    snprintf(pwdStr, sizeof(pwdStr), "pwd: 0x%08X", password);
+
+
+    id_hi = (uint32_t)(user_id >> 32);
+    id_lo = (uint32_t)user_id;
+    for (i = 0; i < id_length; ++i) { // Reverse ID bits given as parameter (for simpler operations)
+        if (i < 32) {
+            rev_id = (rev_id << 1) | (id_lo & 1);
+            id_lo >>= 1;
+        } else {
+            rev_id = (rev_id << 1) | (id_hi & 1);
+            id_hi >>= 1;
+        }
+    }
+
+    for (i = 0; i < id_length; ++i) {
+        int id_bit = rev_id & 1;
+        if (i % 4 == 0) { // Don't write row parity bit at start of parsing
+            if (i)
+                id = (id << 1) | r_parity; // Start counting parity for new row
+            r_parity = id_bit;
+        } else {
+            r_parity ^= id_bit; // Count row parity
+        }
+        if (i < 4) // First elements in column?
+            c_parity[i] = id_bit;// Fill out first elements
+        else
+            c_parity[i % 4] ^= id_bit;// Count column parity
+        id = (id << 1) | id_bit; // Insert ID bit
+        rev_id >>= 1;
+    }
+    id = (id << 1) | r_parity; // Insert parity bit of last row
+    for (i = 0; i < 4; ++i) // Fill out column parity at the end of tag
+        id = (id << 1) | c_parity[i];
+    id <<= 1; // Add stop bit
+    uint32_t sector_1_data = (uint32_t)(id >> 32);
+    uint32_t sector_2_data = (uint32_t)(id & 0xFFFFFFFF);
+
+
+    PrintAndLogEx(INFO, "Writing ID EM-format: %#012x, data in memory: 0x%08X 0x%08X", user_id, sector_1_data, sector_2_data);
+
+    clearCommandBuffer();
+
+    t55xx_write_block_t ng;
+    ng.pwd     = password;
+    ng.flags   = flags;
+
+
+    ng.blockno = 1;
+    ng.data    = sector_1_data;
+    SendCommandNG(CMD_LF_T55XX_WRITEBL, (uint8_t *)&ng, sizeof(ng));
+    if (!WaitForResponseTimeout(CMD_LF_T55XX_WRITEBL, &resp, 2000)) {
+        PrintAndLogEx(ERR, "Error occurred, device did not ACK write operation. (May be due to old firmware)");
+        return PM3_ETIMEOUT;
+    }
+    ng.blockno = 2;
+    ng.data    = sector_2_data;
+    SendCommandNG(CMD_LF_T55XX_WRITEBL, (uint8_t *)&ng, sizeof(ng));
+    if (!WaitForResponseTimeout(CMD_LF_T55XX_WRITEBL, &resp, 2000)) {
+        PrintAndLogEx(ERR, "Error occurred, device did not ACK write operation. (May be due to old firmware)");
+        return PM3_ETIMEOUT;
+    }
+    return PM3_SUCCESS;
+}
+
 static command_t CommandTable[] = {
     {"help",         CmdHelp,                 AlwaysAvailable, "This help"},
     {"bruteforce",   CmdT55xxBruteForce,      IfPm3Lf,         "<start password> <end password> Simple bruteforce attack to find password"},
@@ -2680,6 +2825,7 @@ static command_t CommandTable[] = {
     {"wakeup",       CmdT55xxWakeUp,          IfPm3Lf,         "Send AOR wakeup command"},
     {"wipe",         CmdT55xxWipe,            IfPm3Lf,         "[q] Wipe a T55xx tag and set defaults (will destroy any data on tag)"},
     {"write",        CmdT55xxWriteBlock,      IfPm3Lf,         "b <block> d <data> p [password] [1] -- Write T55xx block data. Optional [p password], [page1]"},
+    {"idem",         CmdT55xxWriteIdEm,       IfPm3Lf,         "i <id> r [downlink_mode] p [password] [t] -- Write T55xx EM id data"},
     {NULL, NULL, NULL, NULL}
 };
 
