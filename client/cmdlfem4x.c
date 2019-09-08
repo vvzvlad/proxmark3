@@ -277,77 +277,77 @@ void printEM410x(uint32_t hi, uint64_t id) {
     } else {
         //output 40 bit em id
         PrintAndLogEx(NORMAL, "\nEM TAG ID      : "_YELLOW_("%010" PRIX64), id);
-        PrintAndLogEx(NORMAL, "\nPossible de-scramble patterns\n");
-        PrintAndLogEx(NORMAL, "Unique TAG ID  : %010" PRIX64, id2lo);
-        PrintAndLogEx(NORMAL, "HoneyWell IdentKey {");
-        PrintAndLogEx(NORMAL, "DEZ 8          : %08" PRIu64, id & 0xFFFFFF);
-        PrintAndLogEx(NORMAL, "DEZ 10         : %010" PRIu64, id & 0xFFFFFFFF);
-        PrintAndLogEx(NORMAL, "DEZ 5.5        : %05" PRIu64 ".%05" PRIu64, (id >> 16LL) & 0xFFFF, (id & 0xFFFF));
-        PrintAndLogEx(NORMAL, "DEZ 3.5A       : %03" PRIu64 ".%05" PRIu64, (id >> 32ll), (id & 0xFFFF));
-        PrintAndLogEx(NORMAL, "DEZ 3.5B       : %03" PRIu64 ".%05" PRIu64, (id & 0xFF000000) >> 24, (id & 0xFFFF));
-        PrintAndLogEx(NORMAL, "DEZ 3.5C       : %03" PRIu64 ".%05" PRIu64, (id & 0xFF0000) >> 16, (id & 0xFFFF));
-        PrintAndLogEx(NORMAL, "DEZ 14/IK2     : %014" PRIu64, id);
-        PrintAndLogEx(NORMAL, "DEZ 15/IK3     : %015" PRIu64, id2lo);
-        PrintAndLogEx(NORMAL, "DEZ 20/ZK      : %02" PRIu64 "%02" PRIu64 "%02" PRIu64 "%02" PRIu64 "%02" PRIu64 "%02" PRIu64 "%02" PRIu64 "%02" PRIu64 "%02" PRIu64 "%02" PRIu64,
-                      (id2lo & 0xf000000000) >> 36,
-                      (id2lo & 0x0f00000000) >> 32,
-                      (id2lo & 0x00f0000000) >> 28,
-                      (id2lo & 0x000f000000) >> 24,
-                      (id2lo & 0x0000f00000) >> 20,
-                      (id2lo & 0x00000f0000) >> 16,
-                      (id2lo & 0x000000f000) >> 12,
-                      (id2lo & 0x0000000f00) >> 8,
-                      (id2lo & 0x00000000f0) >> 4,
-                      (id2lo & 0x000000000f)
-                     );
-        uint64_t paxton = (((id >> 32) << 24) | (id & 0xffffff))  + 0x143e00;
-        PrintAndLogEx(NORMAL, "}\nOther          : %05" PRIu64 "_%03" PRIu64 "_%08" PRIu64, (id & 0xFFFF), ((id >> 16LL) & 0xFF), (id & 0xFFFFFF));
-        PrintAndLogEx(NORMAL, "Pattern Paxton : %" PRIu64 " [0x%" PRIX64 "]", paxton, paxton);
+        //PrintAndLogEx(NORMAL, "\nPossible de-scramble patterns\n");
+        //PrintAndLogEx(NORMAL, "Unique TAG ID  : %010" PRIX64, id2lo);
+        //PrintAndLogEx(NORMAL, "HoneyWell IdentKey {");
+        //PrintAndLogEx(NORMAL, "DEZ 8          : %08" PRIu64, id & 0xFFFFFF);
+        //PrintAndLogEx(NORMAL, "DEZ 10         : %010" PRIu64, id & 0xFFFFFFFF);
+        //PrintAndLogEx(NORMAL, "DEZ 5.5        : %05" PRIu64 ".%05" PRIu64, (id >> 16LL) & 0xFFFF, (id & 0xFFFF));
+        //PrintAndLogEx(NORMAL, "DEZ 3.5A       : %03" PRIu64 ".%05" PRIu64, (id >> 32ll), (id & 0xFFFF));
+        //PrintAndLogEx(NORMAL, "DEZ 3.5B       : %03" PRIu64 ".%05" PRIu64, (id & 0xFF000000) >> 24, (id & 0xFFFF));
+        //PrintAndLogEx(NORMAL, "DEZ 3.5C       : %03" PRIu64 ".%05" PRIu64, (id & 0xFF0000) >> 16, (id & 0xFFFF));
+        //PrintAndLogEx(NORMAL, "DEZ 14/IK2     : %014" PRIu64, id);
+        //PrintAndLogEx(NORMAL, "DEZ 15/IK3     : %015" PRIu64, id2lo);
+        //PrintAndLogEx(NORMAL, "DEZ 20/ZK      : %02" PRIu64 "%02" PRIu64 "%02" PRIu64 "%02" PRIu64 "%02" PRIu64 "%02" PRIu64 "%02" PRIu64 "%02" PRIu64 "%02" PRIu64 //"%02" PRIu64,
+        //              (id2lo & 0xf000000000) >> 36,
+        //              (id2lo & 0x0f00000000) >> 32,
+        //              (id2lo & 0x00f0000000) >> 28,
+        //              (id2lo & 0x000f000000) >> 24,
+        //              (id2lo & 0x0000f00000) >> 20,
+        //              (id2lo & 0x00000f0000) >> 16,
+        //              (id2lo & 0x000000f000) >> 12,
+        //              (id2lo & 0x0000000f00) >> 8,
+        //              (id2lo & 0x00000000f0) >> 4,
+        //              (id2lo & 0x000000000f)
+        //             );
+        //uint64_t paxton = (((id >> 32) << 24) | (id & 0xffffff))  + 0x143e00;
+        //PrintAndLogEx(NORMAL, "}\nOther          : %05" PRIu64 "_%03" PRIu64 "_%08" PRIu64, (id & 0xFFFF), ((id >> 16LL) & 0xFF), (id & 0xFFFFFF));
+        //PrintAndLogEx(NORMAL, "Pattern Paxton : %" PRIu64 " [0x%" PRIX64 "]", paxton, paxton);
 
-        uint32_t p1id = (id & 0xFFFFFF);
-        uint8_t arr[32] = {0x00};
-        int j = 23;
-        for (int k = 0 ; k < 24; ++k, --j) {
-            arr[k] = (p1id >> k) & 1;
-        }
-
-        uint32_t p1  = 0;
-
-        p1 |= arr[23] << 21;
-        p1 |= arr[22] << 23;
-        p1 |= arr[21] << 20;
-        p1 |= arr[20] << 22;
-
-        p1 |= arr[19] << 18;
-        p1 |= arr[18] << 16;
-        p1 |= arr[17] << 19;
-        p1 |= arr[16] << 17;
-
-        p1 |= arr[15] << 13;
-        p1 |= arr[14] << 15;
-        p1 |= arr[13] << 12;
-        p1 |= arr[12] << 14;
-
-        p1 |= arr[11] << 6;
-        p1 |= arr[10] << 2;
-        p1 |= arr[9]  << 7;
-        p1 |= arr[8]  << 1;
-
-        p1 |= arr[7]  << 0;
-        p1 |= arr[6]  << 8;
-        p1 |= arr[5]  << 11;
-        p1 |= arr[4]  << 3;
-
-        p1 |= arr[3]  << 10;
-        p1 |= arr[2]  << 4;
-        p1 |= arr[1]  << 5;
-        p1 |= arr[0]  << 9;
-        PrintAndLogEx(NORMAL, "Pattern 1      : %d [0x%X]", p1, p1);
-
-        uint16_t sebury1 = id & 0xFFFF;
-        uint8_t  sebury2 = (id >> 16) & 0x7F;
-        uint32_t sebury3 = id & 0x7FFFFF;
-        PrintAndLogEx(NORMAL, "Pattern Sebury : %d %d %d  [0x%X 0x%X 0x%X]", sebury1, sebury2, sebury3, sebury1, sebury2, sebury3);
+        //uint32_t p1id = (id & 0xFFFFFF);
+        //uint8_t arr[32] = {0x00};
+        //int j = 23;
+        //for (int k = 0 ; k < 24; ++k, --j) {
+        //    arr[k] = (p1id >> k) & 1;
+        //}
+//
+        //uint32_t p1  = 0;
+//
+        //p1 |= arr[23] << 21;
+        //p1 |= arr[22] << 23;
+        //p1 |= arr[21] << 20;
+        //p1 |= arr[20] << 22;
+//
+        //p1 |= arr[19] << 18;
+        //p1 |= arr[18] << 16;
+        //p1 |= arr[17] << 19;
+        //p1 |= arr[16] << 17;
+//
+        //p1 |= arr[15] << 13;
+        //p1 |= arr[14] << 15;
+        //p1 |= arr[13] << 12;
+        //p1 |= arr[12] << 14;
+//
+        //p1 |= arr[11] << 6;
+        //p1 |= arr[10] << 2;
+        //p1 |= arr[9]  << 7;
+        //p1 |= arr[8]  << 1;
+//
+        //p1 |= arr[7]  << 0;
+        //p1 |= arr[6]  << 8;
+        //p1 |= arr[5]  << 11;
+        //p1 |= arr[4]  << 3;
+//
+        //p1 |= arr[3]  << 10;
+        //p1 |= arr[2]  << 4;
+        //p1 |= arr[1]  << 5;
+        //p1 |= arr[0]  << 9;
+        //PrintAndLogEx(NORMAL, "Pattern 1      : %d [0x%X]", p1, p1);
+//
+        //uint16_t sebury1 = id & 0xFFFF;
+        //uint8_t  sebury2 = (id >> 16) & 0x7F;
+        //uint32_t sebury3 = id & 0x7FFFFF;
+        //PrintAndLogEx(NORMAL, "Pattern Sebury : %d %d %d  [0x%X 0x%X 0x%X]", sebury1, sebury2, sebury3, sebury1, sebury2, sebury3);
     }
 }
 /* Read the ID of an EM410x tag.
