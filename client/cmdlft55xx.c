@@ -2699,6 +2699,8 @@ static int CmdT55xxWriteIdEm(const char *Cmd) {
     uint8_t  cmdp          = 0;
     uint32_t downlink_mode = 0;
 
+    bool no_read = false;
+
     while (param_getchar(Cmd, cmdp) != 0x00 && !errors) {
         switch (tolower(param_getchar(Cmd, cmdp))) {
             case 'h':
@@ -2744,6 +2746,8 @@ static int CmdT55xxWriteIdEm(const char *Cmd) {
     char pwdStr[16] = {0};
     snprintf(pwdStr, sizeof(pwdStr), "pwd: 0x%08X", password);
 
+    PrintAndLogEx(INFO, "Writing ID: %012llX, password: %08X, downlink mode %d", user_id, password, downlink_mode);
+
 
     id_hi = (uint32_t)(user_id >> 32);
     id_lo = (uint32_t)user_id;
@@ -2781,7 +2785,34 @@ static int CmdT55xxWriteIdEm(const char *Cmd) {
     uint32_t sector_2_data = (uint32_t)(id & 0xFFFFFFFF);
 
 
-    PrintAndLogEx(INFO, "Writing ID EM-format: %#012x, data in memory: 0x%08X 0x%08X", user_id, sector_1_data, sector_2_data);
+    clearCommandBuffer();
+
+
+
+    uint32_t old_read_block_1 = 0;
+    uint32_t old_read_block_2 = 0;
+    if (!AquireData(T55x7_PAGE0, 1, usepwd, password, downlink_mode)) no_read = true;
+    if (!DecodeT55xxBlock()) no_read = true;
+    if (GetT55xxBlockData(&old_read_block_1) == false) no_read = true;
+    if (no_read == true)
+    {
+        PrintAndLogEx(ERR, "No read old block 1. Run lf t55 detect?");
+        return PM3_SUCCESS;
+    }
+    PrintAndLogEx(INFO, "Read old block 1: %08X", old_read_block_1);
+
+    if (!AquireData(T55x7_PAGE0, 2, usepwd, password, downlink_mode)) no_read = true;
+    if (!DecodeT55xxBlock()) no_read = true;
+    if (GetT55xxBlockData(&old_read_block_2) == false) no_read = true;
+        if (no_read == true)
+    {
+        PrintAndLogEx(ERR, "No read old block 2. Run lf t55 detect?");
+        return PM3_SUCCESS;
+    }
+    PrintAndLogEx(INFO, "Read old block 2: %08X", old_read_block_2);
+
+
+    PrintAndLogEx(INFO, "Converted to memory damp (2 blocks): 0x%08X 0x%08X", sector_1_data, sector_2_data);
 
     clearCommandBuffer();
 
@@ -2790,6 +2821,7 @@ static int CmdT55xxWriteIdEm(const char *Cmd) {
     ng.flags   = flags;
 
 
+    PrintAndLogEx(INFO, "Write block 1...");
     ng.blockno = 1;
     ng.data    = sector_1_data;
     SendCommandNG(CMD_LF_T55XX_WRITEBL, (uint8_t *)&ng, sizeof(ng));
@@ -2797,6 +2829,8 @@ static int CmdT55xxWriteIdEm(const char *Cmd) {
         PrintAndLogEx(ERR, "Error occurred, device did not ACK write operation. (May be due to old firmware)");
         return PM3_ETIMEOUT;
     }
+
+    PrintAndLogEx(INFO, "Write block 2...");
     ng.blockno = 2;
     ng.data    = sector_2_data;
     SendCommandNG(CMD_LF_T55XX_WRITEBL, (uint8_t *)&ng, sizeof(ng));
@@ -2804,6 +2838,43 @@ static int CmdT55xxWriteIdEm(const char *Cmd) {
         PrintAndLogEx(ERR, "Error occurred, device did not ACK write operation. (May be due to old firmware)");
         return PM3_ETIMEOUT;
     }
+
+    clearCommandBuffer();
+
+    uint32_t new_read_block_1 = 0;
+    uint32_t new_read_block_2 = 0;
+    if (!AquireData(T55x7_PAGE0, 1, usepwd, password, downlink_mode)) no_read = true;
+    if (!DecodeT55xxBlock()) no_read = true;
+    if (GetT55xxBlockData(&new_read_block_1) == false) no_read = true;
+    if (no_read == true)
+    {
+        PrintAndLogEx(ERR, "No read block 1. Run lf t55 detect?");
+        return PM3_SUCCESS;
+    }
+    if (new_read_block_1 != sector_1_data)
+    {
+        PrintAndLogEx(ERR, "No correct block 1: %08X != %08X", new_read_block_1, sector_2_data);
+        return PM3_SUCCESS;
+    }
+    PrintAndLogEx(INFO, "Verification block 1... correct");
+
+    if (!AquireData(T55x7_PAGE0, 2, usepwd, password, downlink_mode)) no_read = true;
+    if (!DecodeT55xxBlock()) no_read = true;
+    if (GetT55xxBlockData(&new_read_block_2) == false) no_read = true;
+        if (no_read == true)
+    {
+        PrintAndLogEx(ERR, "No read block 2. Run lf t55 detect?");
+        return PM3_SUCCESS;
+    }
+    if (new_read_block_2 != sector_2_data)
+    {
+        PrintAndLogEx(ERR, "No correct block 2: %08X != %08X", new_read_block_2, sector_2_data);
+        return PM3_SUCCESS;
+    }
+    PrintAndLogEx(INFO, "Verification block 2... correct");
+
+
+
     return PM3_SUCCESS;
 }
 
